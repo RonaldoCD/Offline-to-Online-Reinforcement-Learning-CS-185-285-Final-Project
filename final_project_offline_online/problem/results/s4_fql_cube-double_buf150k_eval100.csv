@@ -1,0 +1,9 @@
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl0,0,150000,0,600000,100,0.87
+sd0_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl10000,0,150000,10000,600000,100,0.95
+sd0_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl20000,0,150000,20000,600000,100,0.95
+sd0_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl5000,0,150000,5000,600000,100,0.78
+sd1_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl0,1,150000,0,600000,100,0.89
+sd1_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl10000,1,150000,10000,600000,100,0.66
+sd1_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl20000,1,150000,20000,600000,100,0.86
+sd1_fql_cube-double-play-singletask-task1-v0_a300.0_online_buf150000_wsrl5000,1,150000,5000,600000,100,0.94

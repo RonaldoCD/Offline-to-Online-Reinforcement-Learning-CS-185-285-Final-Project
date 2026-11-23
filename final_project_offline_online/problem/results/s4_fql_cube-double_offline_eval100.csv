@@ -1,0 +1,3 @@
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_fql_cube-double-play-singletask-task1-v0_a300.0_offline,0,,,500000,100,0.37
+sd1_fql_cube-double-play-singletask-task1-v0_a300.0_offline,1,,,500000,100,0.45

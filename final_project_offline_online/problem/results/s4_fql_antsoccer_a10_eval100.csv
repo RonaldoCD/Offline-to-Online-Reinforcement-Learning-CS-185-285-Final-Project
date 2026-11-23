@@ -1,0 +1,5 @@
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_fql_antsoccer-arena-navigate-singletask-task1-v0_a10.0_offline,0,,,500000,100,0.65
+sd0_fql_antsoccer-arena-navigate-singletask-task1-v0_a10.0_online_buf150000_wsrl5000,0,150000,5000,600000,100,0.65
+sd1_fql_antsoccer-arena-navigate-singletask-task1-v0_a10.0_offline,1,,,500000,100,0.54
+sd1_fql_antsoccer-arena-navigate-singletask-task1-v0_a10.0_online_buf150000_wsrl5000,1,150000,5000,600000,100,0.61

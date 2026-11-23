@@ -1,0 +1,5 @@
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_qcfql_cube-double-play-singletask-task1-v0_a300.0_h5_offline,0,,,500000,100,0.24
+sd0_qcfql_cube-double-play-singletask-task1-v0_a300.0_h5_online_buf150000_wsrl5000,0,150000,5000,600000,100,0.94
+sd1_qcfql_cube-double-play-singletask-task1-v0_a300.0_h5_offline,1,,,500000,100,0.25
+sd1_qcfql_cube-double-play-singletask-task1-v0_a300.0_h5_online_buf150000_wsrl5000,1,150000,5000,600000,100,1.0
