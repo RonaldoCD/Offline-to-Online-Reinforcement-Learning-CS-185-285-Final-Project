@@ -39,18 +39,18 @@ Offline-to-online RL tries to get the best of both. The main difficulty is the s
 
 | Method | Idea | Code |
 |---|---|---|
-| SAC+BC | Gaussian SAC actor with a behavior-cloning penalty α | [`sacbc_agent.py`](src/agents/sacbc_agent.py) |
-| FQL | Flow-matching BC policy distilled into a one-step Q-maximizing policy | [`fql_agent.py`](src/agents/fql_agent.py) |
-| Offline-data retention | Pre-fill the online replay buffer with dataset transitions | [`train_offline_online.py`](src/scripts/train_offline_online.py) |
-| WSRL | Collect warm-up rollouts with the frozen offline policy before updating | [`train_offline_online.py`](src/scripts/train_offline_online.py) |
-| IFQL | Expectile value learning, flow policy, best-of-N sampling at test time | [`ifql_agent.py`](src/agents/ifql_agent.py) |
-| DSRL | RL in the latent-noise space of a flow BC policy | [`dsrl_agent.py`](src/agents/dsrl_agent.py) |
-| QSM | Diffusion policy whose score is aligned with ∇ₐQ | [`qsm_agent.py`](src/agents/qsm_agent.py) |
-| QC-FQL | FQL over action chunks (Q-chunking) | [`qcfql_agent.py`](src/agents/qcfql_agent.py) |
-| QAM | Q-learning with adjoint matching on a flow policy | [`qam_agent.py`](src/agents/qam_agent.py) |
-| ACIFQL | IFQL over action chunks | [`acifql_agent.py`](src/agents/acifql_agent.py) |
+| SAC+BC | Gaussian SAC actor with a behavior-cloning penalty α | [`sacbc_agent.py`](final_project_offline_online/problem/src/agents/sacbc_agent.py) |
+| FQL | Flow-matching BC policy distilled into a one-step Q-maximizing policy | [`fql_agent.py`](final_project_offline_online/problem/src/agents/fql_agent.py) |
+| Offline-data retention | Pre-fill the online replay buffer with dataset transitions | [`train_offline_online.py`](final_project_offline_online/problem/src/scripts/train_offline_online.py) |
+| WSRL | Collect warm-up rollouts with the frozen offline policy before updating | [`train_offline_online.py`](final_project_offline_online/problem/src/scripts/train_offline_online.py) |
+| IFQL | Expectile value learning, flow policy, best-of-N sampling at test time | [`ifql_agent.py`](final_project_offline_online/problem/src/agents/ifql_agent.py) |
+| DSRL | RL in the latent-noise space of a flow BC policy | [`dsrl_agent.py`](final_project_offline_online/problem/src/agents/dsrl_agent.py) |
+| QSM | Diffusion policy whose score is aligned with ∇ₐQ | [`qsm_agent.py`](final_project_offline_online/problem/src/agents/qsm_agent.py) |
+| QC-FQL | FQL over action chunks (Q-chunking) | [`qcfql_agent.py`](final_project_offline_online/problem/src/agents/qcfql_agent.py) |
+| QAM | Q-learning with adjoint matching on a flow policy | [`qam_agent.py`](final_project_offline_online/problem/src/agents/qam_agent.py) |
+| ACIFQL | IFQL over action chunks | [`acifql_agent.py`](final_project_offline_online/problem/src/agents/acifql_agent.py) |
 
-Every network uses LayerNorm between the linear layer and the activation ([`pytorch_util.py`](src/infrastructure/pytorch_util.py)).
+Every network uses LayerNorm between the linear layer and the activation ([`pytorch_util.py`](final_project_offline_online/problem/src/infrastructure/pytorch_util.py)).
 
 ---
 
@@ -58,18 +58,18 @@ Every network uses LayerNorm between the linear layer and the activation ([`pyto
 
 The simplest approach: train offline, then keep training the same agent on freshly collected online data.
 
-![Naive offline-to-online on cube-single](results/s3_naive_cube-single.png)
+![Naive offline-to-online on cube-single](final_project_offline_online/problem/results/s3_naive_cube-single.png)
 
 **What happens at the offline → online switch (naive FQL):**
 
-![Naive FQL transition metrics](results/s3_fql_naive_transition.png)
+![Naive FQL transition metrics](final_project_offline_online/problem/results/s3_fql_naive_transition.png)
 
 - On cube-single, FQL saturates offline (100%), dips to 88% after the switch, and recovers to 96%.
 - On cube-double, naive fine-tuning **collapses** from 48% to 8%. At the switch, the **Q-loss drops sharply** and the **mean Q-value jumps** from about −140 to −75. The distillation loss barely changes.
 
 **SAC+BC (offline phase only):**
 
-![SAC+BC offline partial](results/s3_sacbc_offline_partial.png)
+![SAC+BC offline partial](final_project_offline_online/problem/results/s3_sacbc_offline_partial.png)
 
 > 🚧 **Pending:** SAC+BC run through the full 500k offline + 100k online steps, 2 seeds. My current runs stop at 350k offline steps.
 
@@ -86,7 +86,7 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 ### 3.1 Retaining offline data
 
-![Offline data in online buffer, cube-double](results/s4_fql_cube-double_offline_data.png)
+![Offline data in online buffer, cube-double](final_project_offline_online/problem/results/s4_fql_cube-double_offline_data.png)
 
 - Keeping **150k–300k** offline transitions prevents the collapse and lifts cube-double to about 90%. Keeping all 500k adapts more slowly (76%), because the online data is diluted.
 
@@ -94,7 +94,7 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 ### 3.2 Warm-start RL (WSRL)
 
-![WSRL warm-up, cube-double](results/s4_fql_cube-double_wsrl.png)
+![WSRL warm-up, cube-double](final_project_offline_online/problem/results/s4_fql_cube-double_wsrl.png)
 
 - WSRL alone also prevents the collapse, and longer warm-ups help (20k steps → 78%). It is weaker than retaining offline data here.
 
@@ -102,14 +102,14 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 ### 3.3 Combining both
 
-![Combined, cube-double](results/s4_fql_cube-double_combined.png)
+![Combined, cube-double](final_project_offline_online/problem/results/s4_fql_cube-double_combined.png)
 
 <details>
 <summary>cube-single sanity check: every variant stays at ~100%</summary>
 
-![cube-single combined](results/s4_fql_cube-single_combined.png)
-![cube-single WSRL](results/s4_fql_cube-single_wsrl.png)
-![cube-single offline data](results/s4_fql_cube-single_offline_data.png)
+![cube-single combined](final_project_offline_online/problem/results/s4_fql_cube-single_combined.png)
+![cube-single WSRL](final_project_offline_online/problem/results/s4_fql_cube-single_wsrl.png)
+![cube-single offline data](final_project_offline_online/problem/results/s4_fql_cube-single_offline_data.png)
 
 </details>
 
@@ -117,17 +117,17 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 | BC coefficient sweep (offline) | Best α = 10, 150k offline data + WSRL 5k |
 |:-:|:-:|
-| ![alpha sweep](results/s4_fql_antsoccer_alpha.png) | ![antsoccer online](results/s4_fql_antsoccer_online.png) |
+| ![alpha sweep](final_project_offline_online/problem/results/s4_fql_antsoccer_alpha.png) | ![antsoccer online](final_project_offline_online/problem/results/s4_fql_antsoccer_online.png) |
 
 - antsoccer is very sensitive to α: only α = 10 learns (65% / 54% offline over 100 episodes). Fine-tuning raises the final success to **63%**.
 
 ### 3.5 IFQL + rejection sampling
 
-![IFQL](results/s4_ifql.png)
+![IFQL](final_project_offline_online/problem/results/s4_ifql.png)
 
 - IFQL saturates cube-single and reaches about 74% offline on antsoccer. On antsoccer it drops after the switch (42–54%), with either 150k or 500k retained transitions.
 
-<p align="center"><img src="assets/videos/ifql_antsoccer_600k_sd0.gif" width="300"><br><sub>IFQL on antsoccer after fine-tuning (600k steps)</sub></p>
+<p align="center"><img src="final_project_offline_online/problem/assets/videos/ifql_antsoccer_600k_sd0.gif" width="300"><br><sub>IFQL on antsoccer after fine-tuning (600k steps)</sub></p>
 
 > 🚧 **Pending:** full cube-double run (2 seeds). I only have the online-phase evaluations of one seed (92% at 600k).
 
@@ -135,19 +135,19 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 | cube-single / cube-double | antsoccer |
 |:-:|:-:|
-| ![DSRL sigma](results/s4_dsrl_sigma.png) | ![DSRL sigma antsoccer](results/s4_dsrl_sigma_antsoccer.png) |
+| ![DSRL sigma](final_project_offline_online/problem/results/s4_dsrl_sigma.png) | ![DSRL sigma antsoccer](final_project_offline_online/problem/results/s4_dsrl_sigma_antsoccer.png) |
 
 - σ<sub>z</sub> = 0.8 works best on cube-double and σ<sub>z</sub> = 1.0 on antsoccer. Fine-tuning brings cube-double to 98% (2 seeds) but antsoccer only to 22%.
 
 | DSRL: cube-double (600k) | DSRL: antsoccer (600k) |
 |:-:|:-:|
-| <img src="assets/videos/dsrl_cube-double_600k.gif" width="300"> | <img src="assets/videos/dsrl_antsoccer_600k.gif" width="300"> |
+| <img src="final_project_offline_online/problem/assets/videos/dsrl_cube-double_600k.gif" width="300"> | <img src="final_project_offline_online/problem/assets/videos/dsrl_antsoccer_600k.gif" width="300"> |
 
 > 🚧 **Pending:** complete σ<sub>z</sub> sweeps (several runs stop at 250k–350k steps).
 
 ### 3.7 QSM
 
-![QSM partial](results/s4_qsm_cube-single.png)
+![QSM partial](final_project_offline_online/problem/results/s4_qsm_cube-single.png)
 
 > 🚧 **Pending:** tuned QSM (η, α ∈ {10, 30, 100}) on cube-single, cube-double and antsoccer. The current run is unstable (loss spike at ~120k steps) and stops at 150k.
 
@@ -179,7 +179,7 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 **Results on cube-double**
 
-![QC-FQL vs FQL with Q-values](results/s5_qcfql_h5_vs_fql_double.png)
+![QC-FQL vs FQL with Q-values](final_project_offline_online/problem/results/s5_qcfql_h5_vs_fql_double.png)
 
 - QC-FQL reaches **97% †** (94% / 100% over two seeds), above the 95% project target.
 - It is *weaker* offline (about 20% vs 48% for FQL) but jumps to about 90% within the first 50k online steps.
@@ -187,14 +187,14 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 | 100k steps (offline) | 500k steps (end of offline) | 600k steps (end of online) |
 |:-:|:-:|:-:|
-| <img src="assets/videos/qcfql_cube-double_100k_offline.gif" width="260"> | <img src="assets/videos/qcfql_cube-double_500k_end-offline.gif" width="260"> | <img src="assets/videos/qcfql_cube-double_600k_end-online.gif" width="260"> |
+| <img src="final_project_offline_online/problem/assets/videos/qcfql_cube-double_100k_offline.gif" width="260"> | <img src="final_project_offline_online/problem/assets/videos/qcfql_cube-double_500k_end-offline.gif" width="260"> | <img src="final_project_offline_online/problem/assets/videos/qcfql_cube-double_600k_end-online.gif" width="260"> |
 | fumbles the cubes; episodes time out | partial progress, still slow | all 4 episodes solved in under 100 steps |
 
 <sub>From the QC-FQL ablation run with α = 222 (seed 8).</sub>
 
 **Results on antsoccer**
 
-![QC-FQL H1 vs FQL antsoccer](results/s5_qcfql_h1_vs_fql_antsoccer.png)
+![QC-FQL H1 vs FQL antsoccer](final_project_offline_online/problem/results/s5_qcfql_h1_vs_fql_antsoccer.png)
 
 - Chunking hurts here: H = 5 gets only 5% †. H = 1 matches FQL offline but drops during fine-tuning (48% † vs 63% †). Dribbling a ball seems to need reactive closed-loop control, and open-loop chunks remove it.
 
@@ -203,8 +203,8 @@ The simplest approach: train offline, then keep training the same agent on fresh
 <details>
 <summary>Ablations: chunk length, critic ensemble size and α on cube-double</summary>
 
-![QC-FQL variants](results/double_qcfql.png)
-![QC-FQL H1 vs FQL cube-double](results/s5_qcfql_h1_vs_fql_double.png)
+![QC-FQL variants](final_project_offline_online/problem/results/double_qcfql.png)
+![QC-FQL H1 vs FQL cube-double](final_project_offline_online/problem/results/s5_qcfql_h1_vs_fql_double.png)
 
 </details>
 
@@ -222,12 +222,12 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 **Results on cube-double**
 
-![QAM vs FQL on cube-double](results/s5_qam_cube-double.png)
+![QAM vs FQL on cube-double](final_project_offline_online/problem/results/s5_qam_cube-double.png)
 
 - QAM learns faster than FQL early in offline training (44% at 300k), but ends the offline phase at 24%.
 - Online it jumps to 88% within 50k steps and ends at **84%** (2 seeds). Q-values rise steadily, a little more slowly than FQL's.
 
-<p align="center"><img src="assets/videos/qam_cube-double_600k.gif" width="300"><br><sub>QAM on cube-double after fine-tuning (600k steps)</sub></p>
+<p align="center"><img src="final_project_offline_online/problem/assets/videos/qam_cube-double_600k.gif" width="300"><br><sub>QAM on cube-double after fine-tuning (600k steps)</sub></p>
 
 > 🚧 **Pending:** QAM on antsoccer (early runs were still at 0% after 50k steps), plus an inverse-temperature sweep.
 
@@ -239,7 +239,7 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 IFQL with 5-step action chunks: expectile value learning over chunks, and best-of-N sampling of whole chunks at test time.
 
-![ACIFQL on cube-double](results/s5_acifql_cube-double.png)
+![ACIFQL on cube-double](final_project_offline_online/problem/results/s5_acifql_cube-double.png)
 
 - Offline success stays between 20% and 48%. The Q- and V-estimates keep decreasing during offline training and recover only once online data arrives.
 - It ends at 60% after fine-tuning (seed 10). A second seed reached 84%, but only its online-phase evaluations were logged.
@@ -253,7 +253,7 @@ IFQL with 5-step action chunks: expectile value learning over chunks, and best-o
 <details>
 <summary>Action-chunked methods side by side on cube-double</summary>
 
-![chunked methods](results/double_methods.png)
+![chunked methods](final_project_offline_online/problem/results/double_methods.png)
 
 </details>
 
@@ -280,11 +280,11 @@ Success rate at step 600k (500k offline + 100k online). † = 100-episode final 
 
 ### cube-double
 
-![cube-double all methods](results/final_cube-double_all_methods.png)
+![cube-double all methods](final_project_offline_online/problem/results/final_cube-double_all_methods.png)
 
 ### antsoccer
 
-![antsoccer all methods](results/final_antsoccer_all_methods.png)
+![antsoccer all methods](final_project_offline_online/problem/results/final_antsoccer_all_methods.png)
 
 > 🚧 **Pending for the final plots:** SAC+BC and QSM on both tasks, a second IFQL seed on cube-double, QAM and ACIFQL on antsoccer.
 
