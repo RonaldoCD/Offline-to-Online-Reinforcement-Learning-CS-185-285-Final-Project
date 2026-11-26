@@ -37,6 +37,16 @@ def load(pattern, csv, key):
     return steps, vals
 
 
+def axis_label(metric):
+    """'critic/q_mean' -> 'Q Mean', 'actor/bc_loss' -> 'BC Loss'."""
+    acronyms = {"q": "Q", "bc": "BC", "v": "V"}
+    parts = metric.split("/")
+    words = parts[-1].split("_")
+    if words == ["loss"] and len(parts) > 1:  # 'bc_actor/loss' -> 'BC Actor Loss'
+        words = parts[-2].split("_") + words
+    return " ".join(acronyms.get(w, w.capitalize()) for w in words)
+
+
 def style(ax):
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
@@ -54,6 +64,10 @@ def main():
     p.add_argument("--metrics", nargs="+", default=["eval/success_rate"],
                    help="eval/* keys come from eval.csv, everything else from train.csv")
     p.add_argument("--title", default=None)
+    p.add_argument("--legend_loc", default="upper left",
+                   help="matplotlib legend location inside the panel, e.g. 'lower center'")
+    p.add_argument("--legend_ax", type=int, default=0,
+                   help="index of the panel (metric) that holds the legend")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
@@ -70,29 +84,26 @@ def main():
             x = steps / 1e3
             mean = np.nanmean(data, axis=1)
             c = COLORS[i % len(COLORS)]
-            ax.plot(x, mean, color=c, lw=2, marker="o", ms=3, label=f"{label} (n={data.shape[1]})")
+            ax.plot(x, mean, color=c, lw=2, marker="o", ms=3, label=label)
             if data.shape[1] > 1:
                 ax.fill_between(x, np.nanmin(data, axis=1), np.nanmax(data, axis=1), color=c, alpha=0.15, lw=0)
 
         off = args.offline_steps / 1e3
         ax.axvline(off, color=MUTED, ls="--", lw=1)
-        ax.axvspan(off, ax.get_xlim()[1], color=GRID, alpha=0.5, lw=0)
+        lo, hi = ax.get_xlim()
+        ax.axvspan(lo, off, color=GRID, alpha=0.5, lw=0)  # shade the offline phase
+        ax.set_xlim(lo, hi)  # keep the shading flush with the axis
         ax.text(off, 1.0, "  online →", transform=ax.get_xaxis_transform(), color=MUTED, fontsize=9, va="top")
         ax.text(off, 1.0, "← offline  ", transform=ax.get_xaxis_transform(), color=MUTED, fontsize=9, va="top", ha="right")
         if metric == "eval/success_rate":
             ax.set_ylim(0, 1.05)
-        ax.set_xlabel("training step (×1000)", color=TEXT, fontsize=10)
-        ax.set_ylabel(metric.split("/")[-1].replace("_", " "), color=TEXT, fontsize=10)
+        ax.set_xlabel("Steps (x1000)", color=TEXT, fontsize=10)
+        ax.set_ylabel(axis_label(metric), color=TEXT, fontsize=10)
         style(ax)
-    handles, labels = axes[0][0].get_legend_handles_labels()
-    ncol = min(len(labels), 3 if n == 1 else 4)
+    axes[0][args.legend_ax].legend(loc=args.legend_loc, frameon=False, fontsize=9)
     if args.title:
         fig.suptitle(args.title, color=TEXT, fontsize=12)
     fig.tight_layout()
-    # Legend below the axes so it never covers the curves
-    rows = int(np.ceil(len(labels) / max(ncol, 1)))
-    fig.subplots_adjust(bottom=0.18 + 0.06 * rows)
-    fig.legend(handles, labels, loc="lower center", ncol=ncol, frameon=False, fontsize=9)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     fig.savefig(args.out, dpi=150, bbox_inches="tight")
     print(f"saved {args.out}")

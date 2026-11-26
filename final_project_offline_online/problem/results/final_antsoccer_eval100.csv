@@ -1,0 +1,9 @@
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_dsrl_antsoccer-arena-navigate-singletask-task1-v0_n1.0_online_buf150000_wsrl5000,0,150000,5000,600000,100,0.21
+sd1_dsrl_antsoccer-arena-navigate-singletask-task1-v0_n1.0_online_buf150000_wsrl5000,1,150000,5000,600000,100,0.11
+sd0_ifql_antsoccer-arena-navigate-singletask-task1-v0_e0.9_ns8_online_buf150000_wsrl5000_frz,0,150000,5000,600000,100,0.79
+sd1_ifql_antsoccer-arena-navigate-singletask-task1-v0_e0.9_ns8_online_buf150000_wsrl5000_frz,1,150000,5000,600000,100,0.85
+sd0_qcfql_antsoccer-arena-navigate-singletask-task1-v0_a30.0_h5_online_buf500000_wsrl5000,0,500000,5000,600000,100,0.18
+sd1_qcfql_antsoccer-arena-navigate-singletask-task1-v0_a30.0_h5_online_buf500000_wsrl5000,1,500000,5000,600000,100,0.32
+sd0_qam_antsoccer-arena-navigate-singletask-task1-v0_i1.0_h5_online_buf150000_wsrl5000,0,150000,5000,600000,100,0.0
+sd1_qam_antsoccer-arena-navigate-singletask-task1-v0_i1.0_h5_online_buf150000_wsrl5000,1,150000,5000,600000,100,0.01

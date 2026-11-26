@@ -187,7 +187,7 @@ The simplest approach: train offline, then keep training the same agent on fresh
 
 | 100k steps (offline) | 500k steps (end of offline) | 600k steps (end of online) |
 |:-:|:-:|:-:|
-| <img src="assets/videos/qcfql_cube-double_100k_offline.gif" width="260"> | <img src="assets/videos/qcfql_cube-double_500k_end-offline.gif" width="260"> | <img src="assets/videos/qcfql_cube-double_600k_end-online.gif" width="260"> |
+| <img src="assets/videos/acfql_cube-double_100k_offline.gif" width="260"> | <img src="assets/videos/acfql_cube-double_500k_end-offline.gif" width="260"> | <img src="assets/videos/acfql_cube-double_600k_end-online.gif" width="260"> |
 | fumbles the cubes; episodes time out | partial progress, still slow | all 4 episodes solved in under 100 steps |
 
 <sub>From the QC-FQL ablation run with α = 222 (seed 8).</sub>
