@@ -74,9 +74,8 @@ def qcfql_config(
         dataset.rewards = train_dataset['rewards']
         # `dones` = trajectory boundaries (used for chunk validity), NOT success.
         # `masks` = 0 at success (terminal: no bootstrapping).
-        # dataset.dones = train_dataset['terminals'].astype(np.float32)
-        # dataset.masks = train_dataset['masks']
-        dataset.dones = 1 - train_dataset['masks']
+        dataset.dones = train_dataset['terminals'].astype(np.float32)
+        # dataset.dones = 1 - train_dataset['masks'].astype(np.float32)
         dataset.masks = train_dataset['masks']
         
         return env, dataset

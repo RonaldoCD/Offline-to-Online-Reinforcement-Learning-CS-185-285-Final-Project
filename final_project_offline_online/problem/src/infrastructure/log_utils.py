@@ -27,10 +27,28 @@ class Logger:
     def log(self, row, step):
         row['step'] = step
         if self.file is None:
+            # Resuming from a checkpoint: keep the rows already logged before this step
+            # (opening with 'w' alone would wipe them). A fresh run (step 0) keeps nothing.
+            kept_header, kept_lines = None, []
+            if os.path.exists(self.path) and os.path.getsize(self.path) > 0:
+                with open(self.path) as f:
+                    lines = f.read().splitlines()
+                if lines and 'step' in lines[0].split(','):
+                    kept_header = lines[0].split(',')
+                    i = kept_header.index('step')
+                    for line in lines[1:]:
+                        cells = line.split(',')
+                        try:
+                            if len(cells) == len(kept_header) and float(cells[i]) < step:
+                                kept_lines.append(line)
+                        except ValueError:
+                            pass
             self.file = open(self.path, 'w')
             if self.header is None:
-                self.header = [k for k, v in row.items() if not isinstance(v, self.disallowed_types)]
+                self.header = kept_header if kept_lines else [k for k, v in row.items() if not isinstance(v, self.disallowed_types)]
                 self.file.write(','.join(self.header) + '\n')
+                for line in kept_lines:
+                    self.file.write(line + '\n')
             filtered_row = {k: v for k, v in row.items() if not isinstance(v, self.disallowed_types)}
             self.file.write(','.join([str(filtered_row.get(k, '')) for k in self.header]) + '\n')
         else:

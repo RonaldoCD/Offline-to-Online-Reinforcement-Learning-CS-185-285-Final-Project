@@ -97,8 +97,11 @@ def main():
                           "--online_training_steps", "0"], args.dry_run)
 
         # 2) Online fine-tuning from that model, one condition at a time
+        # Frozen-actor runs get their own name, so they don't resume into (or skip as
+        # "completed") the existing non-frozen runs.
+        frz = "_frz" if "--freeze_bc_online" in passthrough + shlex.split(args.online_extra) else ""
         for buf, wsrl in args.conditions:
-            run(common + ["--seed", str(seed), "--exp_name", f"{base}_online_buf{buf}_wsrl{wsrl}",
+            run(common + ["--seed", str(seed), "--exp_name", f"{base}_online_buf{buf}_wsrl{wsrl}{frz}",
                           "--offline_checkpoint", ckpt,
                           "--online_training_steps", str(args.online_training_steps),
                           "--initial_offline_steps", str(buf),

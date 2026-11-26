@@ -359,6 +359,12 @@ def run_online_training_loop(
     if is_completed:
         return
 
+    if args.freeze_bc_online:
+        if not hasattr(agent, "freeze_actor"):
+            raise ValueError(f"--freeze_bc_online is not supported by agent {config['agent']!r}")
+        agent.freeze_actor = True
+        print("Online phase: BC actor frozen, fine-tuning only the critic and value function")
+
     # Offline data retention: copy the first `initial_offline_steps` offline transitions
     # into the online replay buffer (made big enough to never overwrite them).
     capacity = max(config["replay_buffer_capacity"], args.initial_offline_steps + config["online_training_steps"])
@@ -522,6 +528,9 @@ def setup_arguments(args=None):
     parser.add_argument("--expectile", type=float, default=None)
     parser.add_argument("--num_samples", type=int, default=None,
                         help="IFQL rejection sampling: number of candidate actions per step")
+    parser.add_argument("--freeze_bc_online", action="store_true",
+                        help="IFQL: freeze the BC flow actor during online training (IDQL-Max); "
+                             "only the critic and value function are fine-tuned")
 
     # FQL / QSM
     parser.add_argument("--alpha", type=float, default=None)
@@ -592,6 +601,8 @@ def main(args):
         exp_name = f"{exp_name}_buf{args.initial_offline_steps}"
     if args.online_training_steps > 0 and args.initial_online_steps > 0:
         exp_name = f"{exp_name}_wsrl{args.initial_online_steps}"
+    if args.online_training_steps > 0 and args.freeze_bc_online:
+        exp_name = f"{exp_name}_frz"
     if args.lr != 3e-4:
         exp_name = f"{exp_name}_lr{args.lr}"    
     if args.exp_name is not None:

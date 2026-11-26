@@ -27,6 +27,7 @@ class QAMAgent(nn.Module):
         q_agg: str = 'mean',
         num_critics: int = 2,
         eval_flow_type: str = "qam",  # set to "bc" to evaluate the BC flow policy alone
+        max_grad_norm: float = 1.0,
     ):
         super().__init__()
 
@@ -56,6 +57,7 @@ class QAMAgent(nn.Module):
         self.q_agg = q_agg
         self.num_samples = num_samples
         self.eval_flow_type = eval_flow_type
+        self.max_grad_norm = max_grad_norm
 
     def sample_actions(self, observations: torch.Tensor):
         for n in range(self.num_samples):
@@ -138,11 +140,12 @@ class QAMAgent(nn.Module):
         velocities_pred = self.actor_flow_bc(observations, actions_hat, t)
         velocities_target = actions - z
         flow_error = (velocities_pred - velocities_target)**2
-        flow_error = flow_error.reshape(batch_size, self.horizon, self.action_dim)
-        loss = torch.mean(flow_error * valids[..., None])
+        # Whole-chunk mask, as in QAM
+        loss = torch.mean(flow_error * valids[:, -1].unsqueeze(-1))
 
         self.actor_flow_bc_optimizer.zero_grad()
         loss.backward()
+        nn.utils.clip_grad_norm_(self.actor_flow_bc.parameters(), self.max_grad_norm)
         self.actor_flow_bc_optimizer.step()
 
         return {
@@ -163,16 +166,15 @@ class QAMAgent(nn.Module):
                             dtype=observations.dtype) * i * self.h
             t_shifted = t + self.h
             a_prev = a_ts[-1]
-            sigma_t = torch.sqrt(2 * self.h * (1 - t_shifted)/t_shifted)
+            # Memoryless noise with the +h offsets used by QAM (keeps sigma > 0 at every step)
+            sigma_t = torch.sqrt(2 * self.h * (1 - t + self.h) / t_shifted)
             z_t = torch.randn_like(a0)            
-            velocity = self.actor_qam(observations, a_prev, t)
             if i != self.flow_steps - 1:
-                # Memoryless SDE step: drift b(a, t) = 2 v(a, t) - a / (t + h)
+                velocity = self.actor_qam(observations, a_prev, t)
                 a_next = a_prev + self.h * (2 * velocity - a_prev / t_shifted) + sigma_t * z_t
             else:
-                # Final step is a deterministic ODE step (sigma = 0 here). It uses the
-                # QAM actor so training matches what `get_flow_action` runs at eval time.
-                a_next = a_prev + self.h * velocity
+                # Last step: deterministic ODE step with the BC actor
+                a_next = a_prev + self.h * self.actor_flow_bc(observations, a_prev, t)
             
             if not torch.isfinite(a_next).all():
                 raise RuntimeError(
@@ -194,13 +196,8 @@ class QAMAgent(nn.Module):
                             dtype=observations.dtype) * i * self.h
             t_shifted = t + self.h
             a_t = a_ts[i].detach().requires_grad_(True)
-            # Base drift must be the SAME function (same time argument) used in `get_sde`,
-            # with the BC velocity in place of the QAM velocity.
-            v_bc = self.actor_flow_bc(observations, a_t, t)
-            if i != self.flow_steps - 1:
-                by = 2 * v_bc - a_t / t_shifted
-            else:
-                by = v_bc  # final deterministic ODE step
+            # BC velocity evaluated at t + h, as in QAM
+            by = 2 * self.actor_flow_bc(observations, a_t, t_shifted) - a_t / t_shifted
             vjp = torch.autograd.grad(
                 outputs=by,
                 inputs=a_t,
@@ -239,25 +236,20 @@ class QAMAgent(nn.Module):
                 q_next = self.target_critic(next_observations, next_actions).mean(dim=0)                
             else:
                 q_next = self.target_critic(next_observations, next_actions)
-                # print(f"q_next shape: {q_next.shape}")
                 q_next = q_next.min(dim=0).values
-                # print(f"q_next shape after min: {q_next.shape}")                
-                # print("Using min")
+
             y = rewards[:, -1] + (self.discount**self.horizon) * masks[:,-1] * q_next 
 
         q = self.critic(observations, actions)
         # print(f"q shape: {q.shape}, y shape: {y.shape}, valids shape: {valids.shape}, actions shape: {actions.shape}" )
-        # As in QC (acfql.py): drop chunks whose last action belongs to another trajectory.
-        # `valids` is built from `dones` = trajectory ends (dataset `terminals`), NOT from
-        # success, so chunks that reach the goal mid-chunk are kept.
         critic_w = valids[:, -1]
         loss = (((q - y.unsqueeze(0)) ** 2) * critic_w).mean()
 
         self.critic_optimizer.zero_grad()
         loss.backward()
+        nn.utils.clip_grad_norm_(self.critic.parameters(), self.max_grad_norm)
         self.critic_optimizer.step()
 
-        q_ens_mean = q.mean(dim=0)
         return {
             "q_loss": loss,
             "q_mean": q.mean(),
@@ -272,37 +264,28 @@ class QAMAgent(nn.Module):
 
         a0 = torch.randn_like(actions)
 
-        # 1. Generate SDE trajectory
+        # Generate SDE trajectory
         with torch.no_grad():
             a_ts, ts, a1 = self.get_sde(
                 observations, a0
             )
 
-        # 2. Terminal adjoint from critic
         with torch.enable_grad():
             a1 = a1.detach().requires_grad_(True)
 
-            q = self.critic(observations, a1).mean(dim=0)
+            q = self.target_critic(observations, torch.clamp(a1, -1, 1)).mean(dim=0)
 
             g1 = -self.inv_temp * torch.autograd.grad(
                 outputs=q.sum(),
                 inputs=a1,
             )[0]
 
-        # 3. Backward adjoint integration
         g_ts = self.get_adjoints(
             observations, a_ts, g1.detach()
         )
 
-        # Continuous-time sigma(t), consistent with `get_sde`: sqrt(2 (1 - t_s) / t_s),
-        # t_s = t + h. (Previously `1 - ts + h`, a sign error.) It is 0 on the last step,
-        # which is the deterministic ODE step, so that step is handled separately below.
-        ts_shifted = ts + self.h
-        sigmas = torch.sqrt(
-            (2 * (1 - ts_shifted) / ts_shifted).clamp_min(0.0)
-        )
+        sigmas = torch.sqrt(2 * (1 - ts + self.h) / (ts + self.h))
 
-        # 5. Flatten flow and batch dimensions
         observations_ts = (
             observations.unsqueeze(0)
             .expand(self.flow_steps, -1, -1)
@@ -317,43 +300,26 @@ class QAMAgent(nn.Module):
             self.flow_steps * batch_size, 1
         )
 
-        # 6. Evaluate QAM actor
-        vel_qam = self.actor_qam(
-            observations_ts, a_ts_flat, ts_flat
-        ).reshape(self.flow_steps, batch_size, -1)
+        vel_qam = self.actor_qam(observations_ts, a_ts_flat, ts_flat).reshape(self.flow_steps, batch_size, -1)
 
-        # 7. Evaluate BC actor without gradients
         with torch.no_grad():
-            vel_bc = self.actor_flow_bc(
-                observations_ts, a_ts_flat, ts_flat
-            ).reshape(self.flow_steps, batch_size, -1)
+            vel_bc = self.actor_flow_bc(observations_ts, a_ts_flat, ts_flat).reshape(self.flow_steps, batch_size, -1)
 
-        # 8. Compute QAM residual on the stochastic steps (sigma > 0)
         vel_diff = vel_qam - vel_bc
-        sde_sigmas = sigmas[:-1]
-        residual = (
-            2 * vel_diff[:-1] / sde_sigmas
-            + sde_sigmas * g_ts[:-1]
-        )
-        # Final deterministic step carries no control: keep the QAM velocity close to BC.
-        final_step_loss = vel_diff[-1].square().sum(dim=-1)
-
-        loss = (
-            residual.square().sum(dim=-1).sum(dim=0) + final_step_loss
-        ).mean() / self.flow_steps
+        residual = 2 * vel_diff / sigmas + sigmas * g_ts
+        loss = residual.square().sum(dim=-1).sum(dim=0).mean()
         if not torch.isfinite(loss):
             raise RuntimeError(
                 f"Invalid QAM loss: {loss.item()}"
             )
 
-        # 9. Optimize QAM actor
         self.actor_qam_optimizer.zero_grad()
         loss.backward()
+        nn.utils.clip_grad_norm_(self.actor_qam.parameters(), self.max_grad_norm)
         self.actor_qam_optimizer.step()
 
         return {
             "qam_loss": loss,
-            "qam_final_step_loss": final_step_loss.mean(),
             # |dQ/da| at the generated action. If ~0, the critic is flat: no learning signal.
             "grad_q_norm": (g1 / self.inv_temp).norm(dim=-1).mean(),
             "adjoint_norm_t0": g_ts[0].norm(dim=-1).mean(),

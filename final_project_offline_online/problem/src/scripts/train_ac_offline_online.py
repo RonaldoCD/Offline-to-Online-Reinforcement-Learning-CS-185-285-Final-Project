@@ -406,7 +406,7 @@ def run_online_training_loop(
         next_observation, reward, terminated, truncated, info = env.step(action)
 
         done = terminated or truncated
-        mask = 1.0 - float(terminated)
+        mask = np.array(1.0 - float(terminated), dtype=np.float32)
 
         replay_buffer.insert(
             observation=observation,

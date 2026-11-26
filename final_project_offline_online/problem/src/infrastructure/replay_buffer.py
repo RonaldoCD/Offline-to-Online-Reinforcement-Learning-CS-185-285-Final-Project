@@ -44,6 +44,8 @@ class ReplayBuffer:
         all_idxs = idxs[:, None] + np.arange(sequence_length)[None, :]
         all_idxs = all_idxs.flatten()
 
+        # batch_observations = self.observations[all_idxs].reshape(batch_size, sequence_length, *self.observations.shape[1:])
+        batch_next_observations = self.next_observations[all_idxs].reshape(batch_size, sequence_length, *self.next_observations.shape[1:])
         batch_actions = self.actions[all_idxs].reshape(batch_size, sequence_length, *self.actions.shape[1:])
         batch_rewards = self.rewards[all_idxs].reshape(batch_size, sequence_length, *self.rewards.shape[1:])
         batch_dones = self.dones[all_idxs].reshape(batch_size, sequence_length, *self.dones.shape[1:])
@@ -70,7 +72,7 @@ class ReplayBuffer:
             "observations": self.observations[idxs],
             "actions": batch_actions,
             "rewards": rewards,
-            "next_observations": self.next_observations[idxs + sequence_length - 1],
+            "next_observations": batch_next_observations[:, -1],
             "dones": dones,
             "valids": valid,
             "masks": masks,

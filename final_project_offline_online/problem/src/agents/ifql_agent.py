@@ -23,7 +23,7 @@ class IFQLAgent(nn.Module):
         discount: float,
         target_update_rate: float,
         flow_steps: int,
-        num_samples: int = 3,
+        num_samples: int = 8,
         expectile: float = 0.9,
     ):
         super().__init__()
@@ -48,6 +48,7 @@ class IFQLAgent(nn.Module):
         self.flow_steps = flow_steps
         self.num_samples = num_samples
         self.expectile = expectile
+        self.freeze_actor = False
 
     @staticmethod
     def expectile_loss(adv: torch.Tensor, expectile: float) -> torch.Tensor:
@@ -281,7 +282,7 @@ class IFQLAgent(nn.Module):
     ):
         metrics_v = self.update_value(observations, actions)
         metrics_q = self.update_q(observations, actions, rewards, next_observations, dones)
-        metrics_actor = self.update_actor(observations, actions)
+        metrics_actor = {} if self.freeze_actor else self.update_actor(observations, actions)
         metrics = {
             **{f"value/{k}": v.item() for k, v in metrics_v.items()},
             **{f"critic/{k}": v.item() for k, v in metrics_q.items()},
