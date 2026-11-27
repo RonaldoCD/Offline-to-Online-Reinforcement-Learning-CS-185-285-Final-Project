@@ -1,0 +1,6 @@
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_sacbc_cube-double-play-singletask-task1-v0_a10.0_offline,0,,,200000,100,0.04
+sd0_sacbc_cube-double-play-singletask-task1-v0_a100.0_offline,0,,,200000,100,0.08
+sd0_sacbc_cube-double-play-singletask-task1-v0_a1000.0_offline,0,,,200000,100,0.01
+sd0_sacbc_cube-double-play-singletask-task1-v0_a30.0_offline,0,,,200000,100,0.06
+sd0_sacbc_cube-double-play-singletask-task1-v0_a300.0_offline,0,,,200000,100,0.0

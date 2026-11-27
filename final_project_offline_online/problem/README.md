@@ -58,7 +58,7 @@ Every network uses LayerNorm between the linear layer and the activation ([`pyto
 
 The simplest approach: train offline, then keep training the same agent on freshly collected online data.
 
-![Naive offline-to-online on cube-single](results/s3_naive_cube-single.png)
+![Naive offline-to-online on cube-single](results/s3_naive.png)
 
 **What happens at the offline → online switch (naive FQL):**
 

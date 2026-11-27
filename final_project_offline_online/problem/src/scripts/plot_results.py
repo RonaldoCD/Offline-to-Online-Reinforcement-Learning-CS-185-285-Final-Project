@@ -1,9 +1,13 @@
 """Plot offline-to-online learning curves (mean over seeds, min/max band).
 
-Example:
-    uv run src/scripts/plot_results.py \
-        --runs "SAC+BC=exp/s3_sacbc/*" "FQL=exp/s3_fql/*" \
-        --offline_steps 250000 --title "Naive offline-to-online (cube-single)" \
+Example (section 2 figure):
+    uv run src/scripts/plot_results.py --runs \
+        "FQL, cube-single=exp/s4_fql/sd*_fql_cube-single-*_online_buf0_wsrl0" \
+        "SAC+BC, cube-single=exp/s3_sacbc/sd*_sacbc_cube-single-*_online_buf0_wsrl0" \
+        "FQL, cube-double=exp/s4_fql/sd*_fql_cube-double-*_online_buf0_wsrl0" \
+        "SAC+BC, cube-double=exp/s4_sacbc_double/sd*_sacbc_cube-double-*_online_buf0_wsrl0" \
+        --colors 0 1 0 1 --linestyles solid solid dashed dashed --offline_steps 500000 \
+        --title "Naive offline-to-online: cube-single vs. cube-double" --legend_loc below \
         --out results/s3_naive.png
 """
 import argparse
@@ -65,9 +69,13 @@ def main():
                    help="eval/* keys come from eval.csv, everything else from train.csv")
     p.add_argument("--title", default=None)
     p.add_argument("--legend_loc", default="upper left",
-                   help="matplotlib legend location inside the panel, e.g. 'lower center'")
+                   help="matplotlib legend location inside the panel, e.g. 'lower center', or 'below'")
     p.add_argument("--legend_ax", type=int, default=0,
                    help="index of the panel (metric) that holds the legend")
+    p.add_argument("--colors", nargs="+", type=int, default=None,
+                   help="palette index per --runs entry (default: run order)")
+    p.add_argument("--linestyles", nargs="+", default=None,
+                   help="matplotlib linestyle per --runs entry, e.g. '-' '--'")
     p.add_argument("--out", required=True)
     args = p.parse_args()
 
@@ -83,8 +91,9 @@ def main():
                 continue
             x = steps / 1e3
             mean = np.nanmean(data, axis=1)
-            c = COLORS[i % len(COLORS)]
-            ax.plot(x, mean, color=c, lw=2, marker="o", ms=3, label=label)
+            c = COLORS[(args.colors[i] if args.colors else i) % len(COLORS)]
+            ls = args.linestyles[i] if args.linestyles else "-"
+            ax.plot(x, mean, color=c, lw=2, ls=ls, marker="o", ms=3, label=label)
             if data.shape[1] > 1:
                 ax.fill_between(x, np.nanmin(data, axis=1), np.nanmax(data, axis=1), color=c, alpha=0.15, lw=0)
 
@@ -100,7 +109,11 @@ def main():
         ax.set_xlabel("Steps (x1000)", color=TEXT, fontsize=10)
         ax.set_ylabel(axis_label(metric), color=TEXT, fontsize=10)
         style(ax)
-    axes[0][args.legend_ax].legend(loc=args.legend_loc, frameon=False, fontsize=9)
+    if args.legend_loc == "below":  # outside the panel, under the x-axis label
+        axes[0][args.legend_ax].legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2,
+                                       frameon=False, fontsize=9)
+    else:
+        axes[0][args.legend_ax].legend(loc=args.legend_loc, frameon=False, fontsize=9)
     if args.title:
         fig.suptitle(args.title, color=TEXT, fontsize=12)
     fig.tight_layout()

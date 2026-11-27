@@ -14,7 +14,7 @@ All experiments run on OGBench environments.
 
 | | |
 |---|---|
-| Environments | `cube-single-play-singletask-task1-v0` (sanity check), `cube-double-play-singletask-task1-v0`, `antsoccer-arena-navigate-singletask-task1-v0` (state-based OGBench) |
+| Environments | `cube-single-play-singletask-task1-v0` (sanity check), `cube-double-play-singletask-task1-v0`, `antsoccer-arena-navigate-singletask-task1-v0` |
 | Budget | 500k offline steps, 100k online steps, 2 seeds |
 | Training-time evaluation | 25 episodes every 50k steps (the curves in the plots) |
 | Final evaluation | 100 episodes on the final checkpoint (the tables) |
@@ -43,14 +43,13 @@ All experiments run on OGBench environments.
 
 ## 2. Naive offline-to-online RL
 
-The switch from offline to online training is a critical part of the process. The naive approach trains offline, then keeps training the same model on purely online data. The training data then shifts from the dataset to the policy's own experience, which can make performance collapse. The collapse is clearest on harder environments such as cube-double: the *Naive* curve in section 3.1 drops from 48% to 8% after the switch.
+The switch from offline to online training is a critical part of the process. The naive approach trains offline, then keeps training the same model on purely online data. The training data then shifts from the dataset to the policy's own experience, which can make performance collapse. The collapse is clearest on harder environments such as cube-double.
 
-![Naive offline-to-online on cube-single](final_project_offline_online/problem/results/s3_naive_cube-single.png)
+![Naive offline-to-online on cube-single and cube-double](final_project_offline_online/problem/results/s3_naive.png)
 
-On cube-single, the switch only causes a small dip:
+<sub>Solid lines: cube-single (α = 300 for both methods, 1 seed). Dashed lines: cube-double (FQL α = 300, 2 seeds, shaded area = min/max; SAC+BC α = 100, 1 seed).</sub>
 
-- **FQL** reaches 100% offline, dips to 88% after the switch, and recovers to 96%.
-- **SAC+BC** reaches 100% after only 50k offline steps and stays between 92% and 100% for the rest of training. Fine-tuning does not hurt it: 96% at 550k and 100% at 600k (1 seed).
+On cube-single, the switch only causes a small dip and then recovers. On a harder environment, cube-double, both methods collapse after the switch.
 
 ## 3. Improving the offline-to-online transition
 
@@ -82,25 +81,25 @@ All methods use the setting chosen in section 3.3 (150k retained offline transit
 
 ![cube-double all methods](final_project_offline_online/problem/results/final_cube-double_all_methods.png)
 
-- In the training-time evaluations, every method except IFQL reaches at least 92% after fine-tuning (see section 4.4 for the 100-episode results). The action-chunked methods (ACFQL and QAM) are among the weakest offline but improve the most online: ACFQL goes from 18% to 98% and QAM from 52% to 98%.
+- In the training-time evaluations, every method except IFQL reaches at least 92% after fine-tuning. The action-chunked methods (ACFQL and QAM) are among the weakest offline but improve the most online: ACFQL goes from 18% to 98% and QAM from 52% to 98%.
 
 | 100k steps (offline) | 500k steps (end of offline) | 600k steps (end of online) |
 |:-:|:-:|:-:|
 | <img src="final_project_offline_online/problem/assets/videos/s4_qam_cube-double_100k.gif" width="250"> | <img src="final_project_offline_online/problem/assets/videos/s4_qam_cube-double_500k.gif" width="250"> | <img src="final_project_offline_online/problem/assets/videos/s4_qam_cube-double_600k.gif" width="250"> |
 
-<sub>QAM (H = 5, η = 1). Training-time evaluation success: 0% at 100k, 32% at 500k and 100% at 600k, when all 4 episodes are solved in about 60 steps. The runs in the plot only rendered the online phase, so the 100k and 500k clips come from an earlier QAM run (seed 8) that rendered every evaluation. The 600k clip is from the plotted run (seed 0).</sub>
+<sub>QAM (H = 5, η = 1). Training-time evaluation success: 0% at 100k, 32% at 500k and 100% at 600k, when all 4 episodes are solved in about 60 steps.</sub>
 
 ### 4.2 antsoccer
 
 ![antsoccer all methods](final_project_offline_online/problem/results/final_antsoccer_all_methods.png)
 
-- antsoccer separates the methods much more (training-time evaluations). IFQL is the only method that clearly improves online (from 74% to 94%), and FQL recovers to 66% after a drop at the end of offline training. DSRL drops after the switch, and the action-chunked methods barely learn: ACFQL ends at 22% and QAM at 0%.
+- antsoccer separates the methods much more. IFQL and FQL are the only methods that clearly improves online (from 74% to 94% and 40% to 68%)
 
 | 500k steps (end of offline) | 600k steps (end of online) |
 |:-:|:-:|
 | <img src="final_project_offline_online/problem/assets/videos/s4_ifql_antsoccer_500k.gif" width="250"> | <img src="final_project_offline_online/problem/assets/videos/s4_ifql_antsoccer_600k_sd0.gif" width="250"> |
 
-<sub>IFQL (seed 0), the best method on antsoccer. Training-time evaluation success: 60% at 500k (the 4 rendered episodes all reach the goal, the slowest after 485 steps) and 100% at 600k. No antsoccer run rendered or saved a checkpoint during the offline phase, so there is no 100k clip. The 500k clip was rendered afterwards from the saved end-of-offline checkpoint.</sub>
+<sub>IFQL (seed 0), the best method on antsoccer. Training-time evaluation success: 60% at 500k and 100% at 600k. </sub>
 
 ### 4.3 Hyperparameters
 

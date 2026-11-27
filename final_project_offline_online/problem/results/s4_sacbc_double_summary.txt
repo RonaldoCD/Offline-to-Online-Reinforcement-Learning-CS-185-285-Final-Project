@@ -1,0 +1,41 @@
+SAC+BC cube-double pipeline summary (Thu Nov 26 11:20:10 PM CET 2026)
+BEST_ALPHA=100.0
+PIPELINE_DONE
+
+== alpha search, 100-episode eval of 200k offline models
+run,seed,initial_offline_steps,initial_online_steps,final_step,num_episodes,success_rate
+sd0_sacbc_cube-double-play-singletask-task1-v0_a10.0_offline,0,,,200000,100,0.04
+sd0_sacbc_cube-double-play-singletask-task1-v0_a100.0_offline,0,,,200000,100,0.08
+sd0_sacbc_cube-double-play-singletask-task1-v0_a1000.0_offline,0,,,200000,100,0.01
+sd0_sacbc_cube-double-play-singletask-task1-v0_a30.0_offline,0,,,200000,100,0.06
+sd0_sacbc_cube-double-play-singletask-task1-v0_a300.0_offline,0,,,200000,100,0.0
+
+== exp/s4_sacbc_double_alpha/sd0_sacbc_cube-double-play-singletask-task1-v0_a1000.0_offline
+0k:0.00 50k:0.00 100k:0.00 150k:0.00 200k:0.00 
+
+== exp/s4_sacbc_double_alpha/sd0_sacbc_cube-double-play-singletask-task1-v0_a100.0_offline
+0k:0.00 50k:0.00 100k:0.00 150k:0.00 200k:0.04 
+
+== exp/s4_sacbc_double_alpha/sd0_sacbc_cube-double-play-singletask-task1-v0_a10.0_offline
+0k:0.00 50k:0.00 100k:0.00 150k:0.00 200k:0.04 
+
+== exp/s4_sacbc_double_alpha/sd0_sacbc_cube-double-play-singletask-task1-v0_a300.0_offline
+0k:0.00 50k:0.00 100k:0.00 150k:0.00 200k:0.00 
+
+== exp/s4_sacbc_double_alpha/sd0_sacbc_cube-double-play-singletask-task1-v0_a30.0_offline
+0k:0.00 50k:0.00 100k:0.00 150k:0.00 200k:0.04 
+
+== exp/s4_sacbc_double/sd0_sacbc_cube-double-play-singletask-task1-v0_a100.0_offline
+0k:0.00 50k:0.00 100k:0.08 150k:0.20 200k:0.04 250k:0.08 300k:0.20 350k:0.12 400k:0.32 450k:0.16 500k:0.16 
+
+== exp/s4_sacbc_double/sd0_sacbc_cube-double-play-singletask-task1-v0_a100.0_online_buf0_wsrl0
+0k:0.00 50k:0.00 100k:0.08 150k:0.20 200k:0.04 250k:0.08 300k:0.20 350k:0.12 400k:0.32 450k:0.16 500k:0.16 550k:0.00 600k:0.00 
+
+== exp/s4_sacbc_double/sd0_sacbc_cube-double-play-singletask-task1-v0_a100.0_online_buf150000_wsrl5000
+0k:0.00 50k:0.00 100k:0.08 150k:0.20 200k:0.04 250k:0.08 300k:0.20 350k:0.12 400k:0.32 450k:0.16 500k:0.16 550k:0.40 600k:0.56 
+
+== exp/s4_sacbc_double/sd1_sacbc_cube-double-play-singletask-task1-v0_a100.0_offline
+0k:0.00 50k:0.12 100k:0.00 150k:0.16 200k:0.00 250k:0.12 300k:0.36 350k:0.08 400k:0.40 450k:0.20 500k:0.36 
+
+== exp/s4_sacbc_double/sd1_sacbc_cube-double-play-singletask-task1-v0_a100.0_online_buf150000_wsrl5000
+0k:0.00 50k:0.12 100k:0.00 150k:0.16 200k:0.00 250k:0.12 300k:0.36 350k:0.08 400k:0.40 450k:0.20 500k:0.36 550k:0.64 600k:0.96 
